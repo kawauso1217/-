@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>エネルギー水分量計算</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            box-sizing: border-box;
+            margin: 0 auto;
+        }
+        h1 {
+            margin-bottom: 10px;
+            font-size: 24px;
+            color: #333;
+        }
+        .note {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 30px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #555;
+            width: 100%;
+            text-align: left;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .time-inputs {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .time-inputs input[type="text"], .time-inputs input[type="number"] {
+            width: calc(50% - 10px);
+            margin-bottom: 0;
+        }
+        .time-inputs span {
+            margin: 0 5px;
+        }
+        input[type="button"], input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input[type="button"]:hover, input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                height: 100%;
+                padding: 10px;
+            }
+            .container {
+                padding: 15px;
+                height: 100%;
+                box-shadow: none;
+                border-radius: 0;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            .note {
+                font-size: 10px;
+            }
+            label {
+                margin-top: 8px;
+                font-size: 14px;
+            }
+            input[type="text"], input[type="number"] {
+                padding: 8px;
+                margin-top: 4px;
+                margin-bottom: 16px;
+            }
+            input[type="button"], input[type="submit"] {
+                padding: 8px;
+                margin-top: 16px;
+            }
+            .time-inputs input[type="text"], .time-inputs input[type="number"] {
+                width: calc(50% - 5px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>登山所要エネルギー/水分量計算</h1>
+        <p class="note">*18~29歳の男性に基づいた計算結果です</p>
+        <form id="calculationForm" onsubmit="calculate(event)">
+            <label for="course_constant">コース定数:</label>
+            <input type="number" id="course_constant" name="course_constant" required>
+            
+            <label for="action_time_hours">行動時間:</label>
+            <div class="time-inputs">
+                <input type="number" id="action_time_hours" name="action_time_hours" placeholder="時間" required>
+                <span>時</span>
+                <input type="number" id="action_time_minutes" name="action_time_minutes" placeholder="分" required>
+                <span>分</span>
+            </div>
+            
+            <label for="body_weight">体重（kg）:</label>
+            <input type="number" id="body_weight" name="body_weight" required>
+            
+            <label for="backpack_weight">ザック重量（kg）:</label>
+            <input type="number" id="backpack_weight" name="backpack_weight" required>
+
+            <label for="dehydration_factor">脱水係数:</label>
+            <input type="number" id="dehydration_factor" name="dehydration_factor" value="7" required>
+            
+            <input type="submit" value="計算">
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function calculate(event) {
+            event.preventDefault();
+            // 入力値の取得
+            const courseConstant = parseFloat(document.getElementById('course_constant').value);
+            const hours = parseInt(document.getElementById('action_time_hours').value);
+            const minutes = parseInt(document.getElementById('action_time_minutes').value);
+            const actionTime = hours + minutes / 60;
+            const bodyWeight = parseFloat(document.getElementById('body_weight').value);
+            const backpackWeight = parseFloat(document.getElementById('backpack_weight').value);
+            const dehydrationFactor = parseFloat(document.getElementById('dehydration_factor').value);
+            
+            // 行動重量の計算
+            const actionWeight = bodyWeight + backpackWeight;
+            
+            // 行動中のエネルギー消費量
+            const energyAction = courseConstant * actionWeight;
+            
+            // 生活中のエネルギー消費量
+            const energyLiving = bodyWeight * actionTime;
+            
+            // 総エネルギー消費量
+            const totalEnergy = Math.round(energyAction + energyLiving);
+            
+            // 行動中の必要水分量
+            const waterAction = bodyWeight * actionTime * dehydrationFactor;
+            
+            // 生活中の必要水分量
+            const waterLiving = bodyWeight * actionTime;
+            
+            // 総必要水分量
+            const totalWater = Math.round(waterAction + waterLiving);
+            
+            // 結果の表示
+            document.getElementById('result').innerHTML = `
+                <h2>計算結果</h2>
+                <p>推定エネルギー消費量: ${totalEnergy} kcal</p>
+                <p>推定脱水量: ${totalWater} リットル</p>
+            `;
+        }
+
+        // フォーカスを順次移動
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('input[type="text"], input[type="number"]');
+            inputs.forEach((input, index) => {
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        if (index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        } else {
+                            document.querySelector('input[type="submit"]').click();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
