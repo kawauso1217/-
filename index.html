@@ -160,7 +160,7 @@
             <label for="backpack_weight">ザック重量（kg）:</label>
             <input type="number" id="backpack_weight" name="backpack_weight" required>
 
-            <label for="dehydration_factor">脱水係数:</label>
+            <label for="dehydration_factor">脱水係数(speedhike目安：夏7~9 冬5~6):</label>
             <input type="number" id="dehydration_factor" name="dehydration_factor" value="7" required>
             
             <input type="submit" value="計算">
@@ -204,10 +204,10 @@
             // 総脱水量（推定）
             const totalWater = Math.round(waterAction + waterLiving);
 
-            //携行するエネルギーの下限値
+            //携行エネルギー下限値
             const minimumEnergy = Math.round(totalEnergy * 0.7);
 
-            // 携行する水分の下限値
+            // 携行水分下限値
             const minimumWaterCarry = Math.round((waterAction - (10 * bodyWeight)) + waterLiving);
             
             // 結果の表示
