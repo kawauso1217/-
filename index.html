@@ -10,11 +10,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background-color: #f4f4f4;
             padding: 20px;
             box-sizing: border-box;
+            overflow-y: auto; /* 縦方向のスクロールを有効にする */
         }
         .container {
             background: #fff;
@@ -36,7 +37,7 @@
         .note {
             color: #888;
             font-size: 12px;
-            margin-bottom: 30px;
+            margin-bottom: 6px;
         }
         form {
             display: flex;
@@ -96,12 +97,10 @@
         
         @media (max-width: 600px) {
             body {
-                height: 100%;
                 padding: 10px;
             }
             .container {
                 padding: 15px;
-                height: 100%;
                 box-shadow: none;
                 border-radius: 0;
             }
@@ -134,6 +133,7 @@
     <div class="container">
         <h1>登山所要エネルギー/水分量計算</h1>
         <p class="note">*18~29歳の男性に基づいた計算結果です</p>
+        <p class="note">*山本正嘉(2016)「登山の運動生理学とトレーニング学」に基づいて作成</p>
         <form id="calculationForm" onsubmit="calculate(event)">
             <label for="course_constant">コース定数:</label>
             <input type="number" id="course_constant" name="course_constant" required>
@@ -146,13 +146,21 @@
                 <span>分</span>
             </div>
             
+            <label for="rest_time_hours">停滞時間(移動や休憩など):</label>
+            <div class="time-inputs">
+                <input type="number" id="rest_time_hours" name="rest_time_hours" placeholder="時間">
+                <span>時</span>
+                <input type="number" id="rest_time_minutes" name="rest_time_minutes" placeholder="分">
+                <span>分</span>
+            </div>
+
             <label for="body_weight">体重（kg）:</label>
             <input type="number" id="body_weight" name="body_weight" required>
             
             <label for="backpack_weight">ザック重量（kg）:</label>
             <input type="number" id="backpack_weight" name="backpack_weight" required>
 
-            <label for="dehydration_factor">脱水係数(スピードハイク目安:夏7~8冬5):</label>
+            <label for="dehydration_factor">脱水係数:</label>
             <input type="number" id="dehydration_factor" name="dehydration_factor" value="7" required>
             
             <input type="submit" value="計算">
@@ -165,9 +173,12 @@
             event.preventDefault();
             // 入力値の取得
             const courseConstant = parseFloat(document.getElementById('course_constant').value);
-            const hours = parseInt(document.getElementById('action_time_hours').value);
-            const minutes = parseInt(document.getElementById('action_time_minutes').value);
-            const actionTime = hours + minutes / 60;
+            const actionHours = parseInt(document.getElementById('action_time_hours').value) || 0;
+            const actionMinutes = parseInt(document.getElementById('action_time_minutes').value) || 0;
+            const actionTime = actionHours + actionMinutes / 60;
+            const restHours = parseInt(document.getElementById('rest_time_hours').value) || 0;
+            const restMinutes = parseInt(document.getElementById('rest_time_minutes').value) || 0;
+            const restTime = restHours + restMinutes / 60;
             const bodyWeight = parseFloat(document.getElementById('body_weight').value);
             const backpackWeight = parseFloat(document.getElementById('backpack_weight').value);
             const dehydrationFactor = parseFloat(document.getElementById('dehydration_factor').value);
@@ -178,26 +189,34 @@
             // 行動中のエネルギー消費量
             const energyAction = courseConstant * actionWeight;
             
-            // 生活中のエネルギー消費量
-            const energyLiving = bodyWeight * actionTime;
+            // 生活中のエネルギー消費量・「1」は基礎代謝の標準値で年齢や性別によって変化する
+            const energyLiving = bodyWeight * restTime * 1;
             
             // 総エネルギー消費量
             const totalEnergy = Math.round(energyAction + energyLiving);
             
-            // 行動中の必要水分量
+            // 行動中の脱水量（推定）
             const waterAction = bodyWeight * actionTime * dehydrationFactor;
             
-            // 生活中の必要水分量
-            const waterLiving = bodyWeight * actionTime;
+            // 生活中の脱水量（推定）
+            const waterLiving = bodyWeight * restTime;
             
-            // 総必要水分量
+            // 総脱水量（推定）
             const totalWater = Math.round(waterAction + waterLiving);
+
+            //携行するエネルギーの下限値
+            const minimumEnergy = Math.round(totalEnergy * 0.7);
+
+            // 携行する水分の下限値
+            const minimumWaterCarry = Math.round((waterAction - (10 * bodyWeight)) + waterLiving);
             
             // 結果の表示
             document.getElementById('result').innerHTML = `
-                <h2>計算結果</h2>
-                <p>推定エネルギー消費量: ${totalEnergy} kcal</p>
-                <p>推定脱水量: ${totalWater} リットル</p>
+                <h2>・計算結果</h2>
+                <p>・推定エネルギー消費量: ${totalEnergy} kcal</p>
+                <p>・推定脱水量: ${totalWater} mL</p>
+                <p>・携行するエネルギーの下限値: ${minimumEnergy} kcal</p>
+                <p>・携行する水分の下限値: ${minimumWaterCarry} mL</p>
             `;
         }
 
